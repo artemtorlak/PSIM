@@ -1,9 +1,20 @@
 #include <iostream>
 #include "memory.h"
-#include "instruction.h"
+
 
 int main()
 {
+
+uint32_t PC = 0;
+uint32_t insn = 0b10010000100101010000010100000011;
+std::cout<<std::bitset<32>(sign_extend(insn));
+
+
+//insn_memory new_insn(insn);
+//new_insn.print_instruction(PC);
+
+
+#if 0
 	int32_t PC = 0;
 
 	Regfile reg_file(4,5,6);
@@ -23,5 +34,6 @@ int main()
 
 	//insn_memory new_object
 
+#endif
 	return 0;
 }
