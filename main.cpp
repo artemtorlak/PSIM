@@ -6,12 +6,46 @@ int main()
 {
 
 uint32_t PC = 0;
-uint32_t insn = 0b10010000100101010000010100000011;
-std::cout<<std::bitset<32>(sign_extend(insn));
+uint32_t insn = 0b00000000000000001000001000000011;
+
+insn_memory instr_memory(insn);
+instr_memory.print_instruction(PC);
+
+PC = alu(0,PC,1);
+
+Regfile new_regfile(15,20,40);
+//получаем значение RS1 
+int32_t A1 = new_regfile.get_register(insn, 15);
+
+std::cout<<"A1 is: "<<std::bitset<32>(A1)<<std::endl;
+
+//получаем значение immidiate
+int32_t imm = new_regfile.get_register(insn,20);
+
+std::cout<<"Imm: "<<std::bitset<32>(imm)<<std::endl;
+
+int32_t sign_extended_imm = sign_extend(insn);
+
+std::cout<<"sign_extended_imm: "<<std::bitset<32>(sign_extended_imm)<<std::endl;
+
+int32_t alu_result = alu(0,A1,sign_extended_imm);
+
+std::cout<<"ALU result "<<std::bitset<32>(alu_result)<<std::endl;
+
+uint32_t value_ = new_regfile.data_memory(alu_result);
+
+std::cout<<"The data_memory of index[alu_result] "<<std::bitset<32>(value_)<<std::endl;
+
+new_regfile.set_register(insn, value_);
+
+new_regfile.print_regfile();
+
+//std::cout<<std::bitset<32>(sign_extend(insn));
 
 
 //insn_memory new_insn(insn);
-//new_insn.print_instruction(PC);
+//new_insn.print_instruction(
+);
 
 
 #if 0

@@ -6,13 +6,13 @@
 #include <bitset>
 
 
-uint32_t sign_extend(uint32_t insn)
+int32_t sign_extend(uint32_t insn)
 {
 	uint16_t number_register = insn>>20;
-	std::cout <<std::bitset<16>(number_register) <<std::endl;
+	//std::cout <<std::bitset<16>(number_register) <<std::endl;
 	uint32_t tmp = 0;	
 	uint8_t get_higher_bit = number_register >> 11;
-	std::cout<<std::bitset<8>(get_higher_bit)<<std::endl;
+	//std::cout<<std::bitset<8>(get_higher_bit)<<std::endl;
 	if(get_higher_bit == 1)
 		 tmp = number_register | 0xFFFFF000;
 	else
@@ -21,7 +21,7 @@ uint32_t sign_extend(uint32_t insn)
 	return tmp;
 }
 
-uint32_t alu(int ALUOp, uint32_t a, uint32_t b)
+int32_t alu(int ALUOp, uint32_t a, uint32_t b)
 {
 	switch(ALUOp)
 	{
@@ -66,7 +66,7 @@ class Regfile
 	{
 		m_regs[0] = a1;
 		m_regs[1] = a2;
-		m_regs[2] = a3;
+		m_regs[20] = a3;
 	}
 	
 
