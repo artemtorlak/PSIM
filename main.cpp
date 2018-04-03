@@ -1,13 +1,44 @@
 #include <iostream>
 #include "memory.h"
-
+#include "stages.h"
 
 int main()
 {
 
-uint32_t PC = 0;
-uint32_t insn = 0b00000000000000001000001000000011;
 
+uint32_t insn = 0b011111100111000010000101000000000;
+uint32_t insn2 =0b01000000100000001000101000011111;
+
+//global instruction and data memory
+insn_data_memory instr_data_mem;
+instr_data_mem.set_instr(insn);
+instr_data_mem.set_instr(insn2);
+
+//global regfile
+Regfile register_file;
+
+//signals
+uint8_t IRWrite = 1;
+uint8_t lorD = 0;
+uint8_t RegWrite = 0;
+
+b_register time_reg;
+uint32_t ALUOut;
+b_register fetch_reg;
+
+b_register decode_reg;
+
+//Fetch stage
+//After this stage we get int time_
+fetch_reg = fetch(instr_data_mem, IRWrite, lorD, time_reg, ALUOut);
+fetch_reg.print_reg();
+
+//Decode stage
+decode_reg = decode(fetch_reg, RegWrite, register_file);
+decode_reg.print_reg();
+
+
+#if 0
 insn_memory instr_memory(insn);
 instr_memory.print_instruction(PC);
 
@@ -41,11 +72,10 @@ new_regfile.set_register(insn, value_);
 new_regfile.print_regfile();
 
 //std::cout<<std::bitset<32>(sign_extend(insn));
-
+#endif
 
 //insn_memory new_insn(insn);
-//new_insn.print_instruction(
-);
+//new_insn.print_instruction();
 
 
 #if 0

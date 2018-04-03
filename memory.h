@@ -5,9 +5,52 @@
 #include <vector>
 #include <bitset>
 
+int8_t multiplexor(int8_t lorD)
+{
+	if(lorD == 0)
+		return 0;
+	else
+		return 1;
+}
+
+uint8_t multiplexor
+
+class b_register
+{
+
+	public:
+
+	uint32_t f_reg;
+	uint32_t sec_reg;
+	uint32_t t_reg;
+	uint32_t fth_reg;
+
+	b_register()
+	{}
+
+	b_register (uint32_t reg1, uint32_t reg2)
+	{
+		f_reg = reg1;
+		sec_reg = reg2;
+	}
+
+	void print_reg()
+	{
+			std::cout<<"instr_reg: "<<std::bitset<32>(f_reg)<<std::endl;
+			std::cout<<"data_reg: "<<std::bitset<32>(sec_reg)<<std::endl;
+			std::cout<<std::endl;
+	}
+};
+
+uint32_t get_bits(uint32_t insn, unsigned int pos, unsigned int n )
+{
+    	return ((insn & (~( ~0 << n ) << pos))>>pos);
+
+}   
 
 int32_t sign_extend(uint32_t insn)
 {
+	std::cout<<"instrusction"<<std::bitset<32>(insn)<<std::endl;
 	uint16_t number_register = insn>>20;
 	//std::cout <<std::bitset<16>(number_register) <<std::endl;
 	uint32_t tmp = 0;	
@@ -20,6 +63,7 @@ int32_t sign_extend(uint32_t insn)
 
 	return tmp;
 }
+
 
 int32_t alu(int ALUOp, uint32_t a, uint32_t b)
 {
@@ -34,15 +78,35 @@ int32_t alu(int ALUOp, uint32_t a, uint32_t b)
 
 
 //класс instn_Memory - хранит массив из 32 битных инструкций
-class insn_memory {
+class insn_data_memory {
 
 	std::vector<uint32_t> insn;
+	uint32_t m_regs[32];
 
 	public:
+	insn_data_memory()
+	{
+	}
+	
+	insn_data_memory(uint32_t a1, uint32_t a2)
+	{
+		m_regs[0] = a1;
+		m_regs[1] = a2;
+	}	
 
-	insn_memory(uint32_t obj)
+	void set_instr(uint32_t obj)
 	{
 		insn.push_back(obj);
+	}
+
+	uint32_t get_instruction(int PC)
+	{
+		return insn[PC];
+	}
+
+	uint32_t get_register(uint32_t reg)
+	{
+		return m_regs[reg];
 	}
 
 	void print_instruction(uint32_t PC)
@@ -57,11 +121,15 @@ class insn_memory {
 	
 };
 
+
 class Regfile
 {
 	uint32_t m_regs[32];
 
   	public:
+  	Regfile()
+  	{}
+
 	Regfile(uint32_t a1, uint32_t a2, uint32_t a3)
 	{
 		m_regs[0] = a1;
@@ -70,28 +138,14 @@ class Regfile
 	}
 	
 
-	//A1,A2
-	//подаем инструкцию, номер бита (from) , получаем начиная с from 5 бит.
-	//эти 5 бит - номер регистра, далее считываем из массива регистров m_regs[number]  
-	int32_t get_register(uint32_t insn, int from)
+	int32_t get_register(uint32_t number_register)
 	{
-		uint8_t number_register = (insn>>from)&0b11111;
 		return m_regs[number_register];
 	}
 
-	//A3
-	//кладем результат от rs1 и rs2 в rd.
-	void set_register(uint32_t insn, uint32_t WD3)
+	void set_register(uint8_t number_register, uint32_t word)
 	{
-		//получаем номер rd, потом в rd кладем WD3
-	 	uint8_t number_register = (insn>>7)&0b11111;
-		m_regs[number_register] = WD3;
-	}
-
-	//m_regs[regfile]
-	uint32_t data_memory(uint32_t aluresult)
-	{
-		return m_regs[aluresult];
+		m_regs[number_register] = word;
 	}
 
 	void print_regfile()
@@ -103,9 +157,6 @@ class Regfile
 	}
 	
 };
-
-
-
 
 
 #endif
