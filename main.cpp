@@ -10,13 +10,19 @@ uint32_t insn = 0b011111100111000010000101000000000;
 uint32_t insn2 =0b01000000100000001000101000011111;
 
 //global instruction and data memory
+
+
 insn_data_memory instr_data_mem;
+
+
 instr_data_mem.set_instr(insn);
 instr_data_mem.set_instr(insn2);
 
 //global regfile
 Regfile register_file;
 
+while(1)
+{
 //signals
 uint8_t IRWrite = 1;
 uint8_t lorD = 0;
@@ -30,14 +36,17 @@ b_register decode_reg;
 
 //Fetch stage
 //After this stage we get int time_
-fetch_reg = fetch(instr_data_mem, IRWrite, lorD, time_reg, ALUOut);
+fetch_reg = fetch(&instr_data_mem, IRWrite, lorD, time_reg, ALUOut); execute_reg.s_reg;
 fetch_reg.print_reg();
 
 //Decode stage
 decode_reg = decode(fetch_reg, RegWrite, register_file);
 decode_reg.print_reg();
 
+execute_reg = execute();
+fetch_reg(execute_reg)
 
+}
 #if 0
 insn_memory instr_memory(insn);
 instr_memory.print_instruction(PC);
