@@ -3,225 +3,133 @@
 
 #include "memory.h"
 
-extern int PC = 1;
-
 //на вход - память инструкций и регистров
 //сигналы
 //регистр после стадии и результат АЛУ
-#if 0
-b_register fetch(insn_data_memory &object, uint8_t IRWrite, uint8_t lorD, b_register t_register, uint32_t ALUOut)
-{
-	//get needed instrctuion
-	if(IRWrite == 1)
+
+Fetch_reg fetch(Insn_data_memory &mem, uint32_t &PC, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t &local_PC) {	
+	Fetch_reg return_reg(mem.get_insn(PC), PC); // read instruction from memory
+
+	//if (PC_R) PC += PC_DISP / 4; // propagate PC
+	std::cout<<"PC_R is: "<<std::bitset<8>(PC_R)<<std::endl;
+	if (PC_R)
 	{
-		//if signal irwirte == 1 , write to register instruction
-		t_register.f_reg = object.get_instruction(PC);
+		std::cout<<"PC_R: "<<std::bitset<8>(PC_R)<<std::endl;
+		PC = local_PC + static_cast<int32_t>(PC_DISP);
+		std::cout<<"local_PC : "<<local_PC<<std::endl;
+		std::cout<<"PC_DISP : "<<static_cast<int32_t>(PC_DISP)<<std::endl;			
+		std::cout<<"PC: "<<std::bitset<32>(PC)<<std::endl;	
 	}
-	else
-	{}
+
+	else  PC += 1;
 	
-	//to determint what to take : instruction or
-	// result of sum ALU ( imm + rs)
-	if(lorD == 1)
-	{	
-		t_register.sec_reg = object.get_instruction(ALUOut);
-	}
-	else
-	{
-		t_register.sec_reg = object.get_instruction(PC);
-	}
-
-
-return t_register;
-}		 
-
-//RegWrite signal
-//new_regfile to read registers from regfile
-b_register decode(b_register fetch_register, uint8_t RegWrite, Regfile regfile)
-{
-//get instruction from b_register of fetch stage
-uint32_t instr = fetch_register.f_reg; 
-b_register return_decode_reg;
-
-	//If RegWrite == 0 only read from register file(rs1 for example)
-	if(RegWrite == 0)
-		{
-			//take 5 rs bits
-			uint32_t rs = get_bits(instr, 15, 5);		
-			//take immidiate
-			uint32_t imm = sign_extend(instr);
-			return_decode_reg.f_reg = rs;
-			return_decode_reg.sec_reg = imm;
-						
-		}	
-	else
-		{
-			//count number of rd register
-			uint32_t rd = get_bits(instr,7,5);
-			//write to regfile[rd register] word 
-			//counted from aluout in stage fetch
-			regfile.set_register(rd, fetch_register.sec_reg);			
-		}
-
-return return_decode_reg;
-}
-
-b_register execute(b_register decode_reg, uint8_t ALUSrcA, uint8_t ALUSrcB, uint8_t ALUControl, int PC)
-{
-b_register return_execute_reg;
-	if(ALUSrcA == 0)
-	{
-		uint32_t alu_result = alu(0,PC,1);
-		return_execute_reg.f_reg = alu_result;
-	}
-	else
-	{
-		uint32_t alu_result = alu(0, decode_reg.f_reg,decode_reg.s_reg); 
-		return_execute_reg.f_reg = alu_result;
-	}
-
-
-return return_execute_reg;
-}
-
-b_register memory(b_register execute_reg, insn_data_memory object, uint8_t WE)
-{
-b_register return_memory_reg;
-
-	//if WE == 0 read from data/instr memory
-	if(WE == 0)
-	{
-		uint32_t num_reg= execute_reg.f_reg;
-		//get instruction
-		return_memory_reg.f_reg =  get_register[num_reg];
-	}
-	else
-	{
-	}
-
-
-return return_memory_reg;
-} 
-
-void write_back(b_register execute_reg, uint8_t WB_WE)
-{
-	//write to RegFile
-	if(WB_WE == 1)
-	{
-		
-	}
-
-}
-
-
-#endif
-
-extern int PC_R;
-extern int PC_DISP;
-
-fetch_reg fetch(insn_data_memory &mem, int PC)
-{
-	
-	fetch_reg return_reg;
-	if(PC_R == 1)
-		PC = PC+PC_DISP;
-	else
-		PC = PC+1;
-
-	return_reg.set_reg( mem.get_instruction(PC) );
-
 	return return_reg;
 }
 
-decode_reg decode(fetch_reg reg, Regfile &obj) 
-{
+Decode_reg decode(Fetch_reg &reg, Regfile &regfile) {
+	CU_signals CU = control_unit(reg.get_reg()); //create Control Unit
 
-	//create Control Unit
-	struct CU_signals CU;
-	//initialize control unit depend from instruction
-	CU = control_unit(reg.get_reg());
-	decode_reg return_reg;
-
-	uint8_t	rs1 = get_bits(reg.get_reg(), 15, 5);
+	uint32_t local_PC = reg.get_PC();
+	std::cout<<"reg.get_reg: "<<std::bitset<32>(reg.get_reg())<<std::endl;
+	uint8_t	rs1 = get_bits(reg.get_reg(), 15, 5); // get data
 	uint8_t	rs2 = get_bits(reg.get_reg(), 20, 5);
 	uint8_t	rd = get_bits(reg.get_reg(), 7, 5);
 	uint16_t imm1 = get_bits(reg.get_reg(), 20, 11);
 	uint32_t imm2 = get_bits(reg.get_reg(), 31, 1);
 
-	uint32_t sgn = sign_extended(imm2);
-	uint32_t rs1_val = obj.get_register(rs1);
-	uint32_t rs2_val = obj.get_register(rs2);
+	uint32_t sgn = sign_extend(reg.get_reg()); // sign extend immediate
+	uint32_t rs1_val = regfile.get_register(rs1); // read data from regfile
+	uint32_t rs2_val = regfile.get_register(rs2);
 
-	return_reg.set_reg(CU,rs1,rs2,rs1_val,rs2_val,rd);
-
+	//take here not imm2 , but sign_extended(imm2)
+	Decode_reg return_reg(CU, rs1, rs2, rs1_val, rs2_val, rd, imm1, sgn, local_PC);
+	return return_reg;
 }
 
-execute_reg execute(decode_reg reg)
-{
-execute_reg return_reg;
-
-	CU_signals get_CU = reg.get_CU_reg();
-
-	uint8_t AluOp_sign = get_CU.AluOp;
-	uint8_t mux_ex_sign = get_CU.mux_ex1;
-	uint8_t conditional_sign = get_CU.conditional;
-
-	uint8_t rs1_address = reg.RS1_reg();
-	uint8_t rs1_value = reg.RS1_val_reg();
-	uint8_t rs2_value = reg.RS2_val_reg();	
-	uint16_t imm1_value = reg.Imm1_reg();
-	uint32_t imm2_value = reg.Imm2_reg();
-	uint32_t RD_reg = reg.RD_reg();
-
-	if(
-
-	//????????
-
+Execute_reg execute(Decode_reg &reg, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t &BP_EX, uint32_t &BP_MEM, uint32_t &local_PC) {
+	CU_signals CU = reg.get_CU_reg(); // get signals
 	
+	uint8_t AluOp = CU.AluOp;
+	uint8_t mux_ex_1 = CU.mux_ex1;
+	uint8_t conditional = CU.conditional;
 
-	//????????
+	local_PC = reg.get_local_PC();
+	uint8_t rs1_val = reg.get_rs1_val(); // get data
+	uint8_t rs2_val = reg.get_rs2_val();	
+	uint16_t imm1 = reg.get_imm1(); //from 20 to 30 bit
+	uint32_t imm2 = reg.get_imm2(); // 31 bit is here sign extended!!( uint32_t )
+	uint8_t rd = reg.get_rd(); // from 7 to 11 bit
 
-return return_reg;
+	std::cout<<"imm1 is: "<<std::bitset<32>(imm1)<<std::endl;
+	std::cout<<"imm2 is: "<<std::bitset<32>(imm2)<<std::endl;
+
+	struct Imm imm;
+	imm.imm_I = imm1 | imm2;
+	imm.imm_S = imm2 | ((get_bits(imm1,5,6) << 5 ) | rd);
+	imm.imm_B = imm2 | ( (get_bits(rd,1,4) | get_bits(imm1,5,5) << 4 | get_bits(imm1,10,1) << 9 | get_bits(imm2,31,1) << 10 ));
+	std::cout<<"immidiate B is: "<<std::bitset<32>(imm.imm_B)<<std::endl;
+
+	// mux1, mux2
+
+	uint32_t mux5_res = multiplexor5(rs2_val, imm, rd, mux_ex_1); // mux5
+	PC_DISP = mux5_res;
+	
+	std::cout<<"PC_DISP: "<<std::bitset<32>(PC_DISP)<<std::endl;
+	//PC_DISP just return imm.imm_B
+	uint32_t ALUresult = alu(AluOp, rs1_val, mux5_res); // ALU
+
+	if (conditional == 1 && rs1_val == rs2_val) {// comparator - conditional
+		PC_R = 1;
+		std::cout << "it is a branch" << std::endl;
+	}
+	else PC_R = 0;
+
+	Execute_reg return_reg(CU, rs2_val, ALUresult, rd);
+	return return_reg;
 }
 
-memory_reg memory(execute_reg reg, insn_data_memory &mem)
-{	
-	CU_signals get_CU = reg.get_CU_reg();
-	uint32_t get_alu_result = reg.ALUresult_reg();
-	uint32_t RS1_val = reg.rs1_val_reg();
+Memory_reg memory(Execute_reg &reg, Insn_data_memory &mem, uint32_t &BP_EX) {	
+	CU_signals CU = reg.get_CU_reg(); // get signals
+	uint8_t mux_mem1 = CU.mux_mem1;
+	uint8_t MEM_WE = CU.MEM_WE;
 
-	uint8_t MEM_WE = get_CU.MEM_WE;
-	uint32_t RD = mem.get_register(get_alu_result);
-	if(MEM_WE == 1)
-	   	mem.set_register(RS1_val, get_alu_result);	
+	uint32_t rs2_val = reg.get_rs2_val(); // get data
+	uint32_t get_alu_result = reg.get_ALUresult();
+
+	uint32_t rd = mem.get_register(get_alu_result); // read from memory anyway
+	if (MEM_WE)
+	   	mem.set_register(rs2_val, get_alu_result); // write to memory only on signal
 	
+	uint32_t result_d;
+	if (!mux_mem1) // multiplexor
+		result_d = rd;
+	else 
+		result_d = get_alu_result;
 
-	uint32_t RESULT_D;	
-	if(mux_mem1 == 0)
-		RESULT_D = RD;
-	else
-		RESULT_D = get_alu_result;
+	BP_EX = reg.get_ALUresult(); // set signal
 	
-	memory_reg return_reg(get_CU, RESULT_D, reg.RD_reg());
-
+	Memory_reg return_reg(CU, result_d, reg.get_rd());
 	return return_reg;	
 }
 
-void write_back(memory_reg reg, Regfile &regfile)
-{
-	CU_signals get_CU = reg.get_CU_reg();
-	uint8_t WB_WE_signal = get_CU.WB_WE;
-	uint32_t WB_D = reg.mux_res();
-	uint8_t WB_A = reg.RD_reg();
+void write_back(Memory_reg &reg, Regfile &regfile, uint32_t &BP_MEM) {
+	CU_signals CU = reg.get_CU_reg(); // get signals
+	uint8_t WB_WE_signal = CU.WB_WE;
+	uint8_t STOP_signal = CU.stop;
 
-	if(WB_WE == 1)
-		regfile.set_register(WB_A, WB_D);
+	if (STOP_signal == 1) {
+		std::cout << "STOP PIPELINE!" << std::endl << std::endl;
+		exit(-1);
+	}
 
+	uint32_t WB_D = reg.get_mux_res(); // set signals
+	BP_MEM = reg.get_mux_res();
+	uint8_t WB_A = reg.get_rd();
+
+	if (WB_WE_signal) {
+		regfile.set_register(WB_A, WB_D); // write to regfile only on signal
+		std::cout << "[reg]: " << std::bitset<8>(WB_A) << " -> " << std::bitset<32>(regfile.get_register(WB_A)) << std::endl; 
+	}
 }
 
-
-
 #endif
-
-
-

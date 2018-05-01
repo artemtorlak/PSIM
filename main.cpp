@@ -1,112 +1,94 @@
-#include <iostream>
 #include "memory.h"
 #include "stages.h"
 
-int main()
-{
-
-
-uint32_t insn = 0b011111100111000010000101000000000;
-uint32_t insn2 =0b01000000100000001000101000011111;
-
-//global instruction and data memory
-
-
-insn_data_memory instr_data_mem;
-
-
-instr_data_mem.set_instr(insn);
-instr_data_mem.set_instr(insn2);
-
-//global regfile
-Regfile register_file;
-
-while(1)
-{
-//signals
-uint8_t IRWrite = 1;
-uint8_t lorD = 0;
-uint8_t RegWrite = 0;
-
-b_register time_reg;
-uint32_t ALUOut;
-b_register fetch_reg;
-
-b_register decode_reg;
-
-//Fetch stage
-//After this stage we get int time_
-fetch_reg = fetch(&instr_data_mem, IRWrite, lorD, time_reg, ALUOut); execute_reg.s_reg;
-fetch_reg.print_reg();
-
-//Decode stage
-decode_reg = decode(fetch_reg, RegWrite, register_file);
-decode_reg.print_reg();
-
-execute_reg = execute();
-fetch_reg(execute_reg)
-
-}
-#if 0
-insn_memory instr_memory(insn);
-instr_memory.print_instruction(PC);
-
-PC = alu(0,PC,1);
-
-Regfile new_regfile(15,20,40);
-//получаем значение RS1 
-int32_t A1 = new_regfile.get_register(insn, 15);
-
-std::cout<<"A1 is: "<<std::bitset<32>(A1)<<std::endl;
-
-//получаем значение immidiate
-int32_t imm = new_regfile.get_register(insn,20);
-
-std::cout<<"Imm: "<<std::bitset<32>(imm)<<std::endl;
-
-int32_t sign_extended_imm = sign_extend(insn);
-
-std::cout<<"sign_extended_imm: "<<std::bitset<32>(sign_extended_imm)<<std::endl;
-
-int32_t alu_result = alu(0,A1,sign_extended_imm);
-
-std::cout<<"ALU result "<<std::bitset<32>(alu_result)<<std::endl;
-
-uint32_t value_ = new_regfile.data_memory(alu_result);
-
-std::cout<<"The data_memory of index[alu_result] "<<std::bitset<32>(value_)<<std::endl;
-
-new_regfile.set_register(insn, value_);
-
-new_regfile.print_regfile();
-
-//std::cout<<std::bitset<32>(sign_extend(insn));
-#endif
-
-//insn_memory new_insn(insn);
-//new_insn.print_instruction();
-
-
-#if 0
-	int32_t PC = 0;
-
-	Regfile reg_file(4,5,6);
-	//reg_file.print_regfile();
-
-	Instruction Instruction1(1, 2, 3, 0b000011, 0b000000111010, 0b010, 0b011);
-	Instruction1.print_Instruction();	
-
-	Instruction Instruction2(3, 2, 1, 0b00001, 0b000100111010, 0b000, 0b010);
+int main() {
+	#if 0
+	std::vector<uint32_t> insns = { 0b00000000000000010010000010000011, // LW x1,x2,0
+									0b00000000010100100000000110110011, // ADD x3,x4,x5
+									0b01000000101000110000001010110011, // SUB x5,x6,x10
+									0b00000000100100111000001101100011, // BEQ x7,x9,3
+									0b00000000001000011000001100110011, // ADD x6,x3,x2
+									0b01000000101000110000001010110011, // SUB x5,x6,x10
+									0b01000000101000110000001010110011,
+									0b01000000101000110000001010110011,
+									0b01000000101000110000001010110011,
+									0b01000000101000110000001010110011,
+									0b01000000101000110000001010110011,
+									0b00000000000000000000000001111111, // STOP
+									0b01000000101000110000001010110011,
+									0b01000000101000110000001010110011,
+									0b01000000101000110000001010110011,
+									0b01000000101000110000001010110011,
+									0b01000000101000110000001010110011,
+									0b01000000101000110000001010110011,
+									0b01000000101000110000001010110011,
+									0b01000000101000110000001010110011,
+									0b01000000101000110000001010110011,
+									0b01000000101000110000001010110011
+									 };
 	
+	#endif
+	
+	std::vector<uint32_t> insns = {0b00000000010000011000000110110011, //add x3 , x3, x4
+								   0b00000000001100101000011001100011, // beq x3, x5, 4
+								   0b11111110010100101000111011100011,  //beq x5, x5, -2
+								   0b00000000000000000000000000000000,									   
+								   0b00000000000000000000000000000000,
+								   0b00000000000000000000000000000000,									   
+								   0b00000000000000000000000000000000,							   
+								   0b00000000000000000000000001111111};
+	// global instruction and data memory
+	Insn_data_memory instr_data_mem;
+	instr_data_mem.set_insn(insns);
+	instr_data_mem.print_memory();
 
-	insn_memory new_memory(Instruction1, Instruction2);
-	new_memory.print_memory();
+	// global regfile
+	uint32_t regs[32] = {0, 2, 0, 1, 1, 1000, 10, 7, 3, 7, 4, 6, 2, 6, 2, 5, 3, 6, 2, 7, 6, 4, 2, 6, 9, 3, 3, 0, 8, 4, 5, 3};
+	Regfile regfile(regs);
+	regfile.print_regfile();
 
-	std::cout<<"returned instruction"<<std::endl;
-	new_memory.return_insn(PC).print_Instruction();
+	// global signals
+	uint32_t PC = 0;
+	uint32_t PC_DISP = 0;
+	uint8_t PC_R = 0;
+	uint32_t BP_EX = 0;
+	uint32_t BP_MEM = 0;
+	uint32_t local_PC = 0;
 
-	//insn_memory new_object
+	Fetch_reg fetch_reg;
+	Decode_reg decode_reg;
+	Execute_reg execute_reg;
+	Memory_reg memory_reg;
 
-#endif
+	int N = 6000;
+	 // number of cycles
+	for (int i = 0; i < N; i++) {
+		printf("--------------------------------------------------------\n");
+		std::cout << "PC = " << PC << std::endl;
+		std::cout << "cycle = " << i << std::endl << std::endl;
+
+		//Fetch stage
+		//After this stage we get int time_
+		Fetch_reg fetch_tmp = fetch(instr_data_mem, PC, PC_DISP, PC_R, local_PC); 
+		fetch_tmp.print_reg();
+
+		//Decode stage
+		Decode_reg decode_tmp = decode(fetch_reg, regfile);
+		decode_tmp.print_reg();
+
+		Execute_reg execute_tmp = execute(decode_reg, PC_DISP, PC_R, BP_EX, BP_MEM, local_PC);
+		execute_tmp.print_reg();
+
+		Memory_reg memory_tmp = memory(execute_reg, instr_data_mem, BP_EX);
+		memory_tmp.print_reg();
+
+		write_back(memory_reg, regfile, BP_MEM);
+
+		fetch_reg = fetch_tmp;
+		decode_reg = decode_tmp;
+		execute_reg = execute_tmp;
+		memory_reg = memory_tmp;
+	}
+
 	return 0;
 }
