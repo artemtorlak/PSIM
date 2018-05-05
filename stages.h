@@ -7,7 +7,7 @@
 //сигналы
 //регистр после стадии и результат АЛУ
 
-Fetch_reg fetch(Insn_data_memory &mem, uint32_t &PC, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t &local_PC) {	
+Fetch_reg fetch(Insn_data_memory &mem, uint32_t &PC, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t &local_PC, uint8_t branch) {	
 	Fetch_reg return_reg(mem.get_insn(PC), PC); // read instruction from memory
 
 	//if (PC_R) PC += PC_DISP / 4; // propagate PC
@@ -19,10 +19,14 @@ Fetch_reg fetch(Insn_data_memory &mem, uint32_t &PC, uint32_t &PC_DISP, uint8_t 
 		std::cout<<"local_PC : "<<local_PC<<std::endl;
 		std::cout<<"PC_DISP : "<<static_cast<int32_t>(PC_DISP)<<std::endl;			
 		std::cout<<"PC: "<<std::bitset<32>(PC)<<std::endl;	
+		branch = 1;
 	}
 
-	else  PC += 1;
-	
+	else  
+	{
+		PC += 1;
+		branch = 0;
+	}
 	return return_reg;
 }
 
@@ -46,7 +50,7 @@ Decode_reg decode(Fetch_reg &reg, Regfile &regfile) {
 	return return_reg;
 }
 
-Execute_reg execute(Decode_reg &reg, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t &BP_EX, uint32_t &BP_MEM, uint32_t &local_PC) {
+Execute_reg execute(Decode_reg &reg, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t &BP_EX, uint32_t &BP_MEM, uint32_t &local_PC, uint8_t branch) {
 	CU_signals CU = reg.get_CU_reg(); // get signals
 	
 	uint8_t AluOp = CU.AluOp;
@@ -80,6 +84,7 @@ Execute_reg execute(Decode_reg &reg, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t 
 
 	if (conditional == 1 && rs1_val == rs2_val) {// comparator - conditional
 		PC_R = 1;
+		branch = 1;
 		std::cout << "it is a branch" << std::endl;
 	}
 	else PC_R = 0;
@@ -88,7 +93,7 @@ Execute_reg execute(Decode_reg &reg, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t 
 	return return_reg;
 }
 
-Memory_reg memory(Execute_reg &reg, Insn_data_memory &mem, uint32_t &BP_EX) {	
+Memory_reg memory(Execute_reg &reg, Insn_data_memory &mem, uint32_t &BP_EX, uint8_t branch) {	
 	CU_signals CU = reg.get_CU_reg(); // get signals
 	uint8_t mux_mem1 = CU.mux_mem1;
 	uint8_t MEM_WE = CU.MEM_WE;
@@ -97,7 +102,7 @@ Memory_reg memory(Execute_reg &reg, Insn_data_memory &mem, uint32_t &BP_EX) {
 	uint32_t get_alu_result = reg.get_ALUresult();
 
 	uint32_t rd = mem.get_register(get_alu_result); // read from memory anyway
-	if (MEM_WE)
+	if (MEM_WE & (!branch) )
 	   	mem.set_register(rs2_val, get_alu_result); // write to memory only on signal
 	
 	uint32_t result_d;
@@ -112,7 +117,7 @@ Memory_reg memory(Execute_reg &reg, Insn_data_memory &mem, uint32_t &BP_EX) {
 	return return_reg;	
 }
 
-void write_back(Memory_reg &reg, Regfile &regfile, uint32_t &BP_MEM) {
+void write_back(Memory_reg &reg, Regfile &regfile, uint32_t &BP_MEM, uint8_t &branch) {
 	CU_signals CU = reg.get_CU_reg(); // get signals
 	uint8_t WB_WE_signal = CU.WB_WE;
 	uint8_t STOP_signal = CU.stop;
@@ -126,10 +131,10 @@ void write_back(Memory_reg &reg, Regfile &regfile, uint32_t &BP_MEM) {
 	BP_MEM = reg.get_mux_res();
 	uint8_t WB_A = reg.get_rd();
 
-	if (WB_WE_signal) {
+	if (WB_WE_signal & (!branch)){
 		regfile.set_register(WB_A, WB_D); // write to regfile only on signal
 		std::cout << "[reg]: " << std::bitset<8>(WB_A) << " -> " << std::bitset<32>(regfile.get_register(WB_A)) << std::endl; 
-	}
+	} 
 }
 
 #endif
