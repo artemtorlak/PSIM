@@ -1,0 +1,8 @@
+/opt/riscv32i/bin/riscv32-unknown-elf-objdump -d load_elf // to watch assembler instructions(txt)
+riscv32 -S prog.c -o assembly_prog -Wextra
+
+
+
+minimal instruction build:
+riscv32 -c prog.c
+/opt/riscv32i/bin/riscv32-unknown-elf-objdump -d hello
