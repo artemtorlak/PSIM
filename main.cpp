@@ -22,15 +22,14 @@ int main()
 
     std::cout<<"CMD SIZE IS: "<<insns.size()<<std::endl;
 
-
 	#if 0	
     std::vector<uint32_t> insns = {0b00000000010000011000000110110011, //add x3 , x3, x4
-								   0b00000000001100101000001001100011, // beq x3, x5, 2
-								   0b11111110010100101000111011100011,  //beq x5, x5, -2
+								   0b0000000 00011 00101 000 00100 1100011, // beq x3, x5, 2
+								   0b1111111 00101 00101 000 11101 1100011,  //beq x5, x5, -2
 								   0b00000000000000000000000001111111};
 	#endif
 	// global instruction and data memory
-	//std::vector<uint32_t> insns = {0b11111110010100101000111011100011};	
+	//std::vector<uint32_t> insns = {0b11110111000000010000000100010011};	
 	Insn_data_memory instr_data_mem;
 	instr_data_mem.set_insn(insns);
 	instr_data_mem.print_memory();

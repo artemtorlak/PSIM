@@ -16,6 +16,7 @@ Fetch_reg fetch(Insn_data_memory &mem, uint32_t &PC, uint32_t &PC_DISP, uint8_t 
 		std::cout<<"LOCAL_PC = "<<local_PC<<std::endl<<std::endl;
 		std::cout<<"PC = "<<local_PC<<std::endl<<std::endl;
 		std::cout<<"static_cast<int32_t>(PC_DISP) = "<<static_cast<int32_t>(PC_DISP)<<std::endl<<std::endl;
+		
 		PC = local_PC + static_cast<int32_t>(PC_DISP);
 		int32_t NEW_PC = local_PC + static_cast<int32_t>(PC_DISP);
 		std::cout<<"NEW_PC = "<<NEW_PC<<std::endl<<std::endl;
