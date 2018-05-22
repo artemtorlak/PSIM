@@ -1,6 +1,6 @@
 #include "memory.h"
 
-uint32_t multiplexor5(uint32_t rs2_val, Imm imm, uint32_t rd, uint8_t mux_ex) {
+int32_t multiplexor5(int32_t rs2_val, Imm imm, uint32_t rd, uint8_t mux_ex) {
 	switch (mux_ex) {
 		case 0: return rs2_val;
 		case 1: return imm.imm_I;
@@ -17,7 +17,7 @@ int8_t multiplexor(int8_t lorD) {
 	return 1;
 }
 
-uint32_t get_bits(uint32_t insn, unsigned int pos, unsigned int n) {
+int32_t get_bits(uint32_t insn, unsigned int pos, unsigned int n) {
     return ((insn & (~(~0 << n) << pos)) >> pos);
 }   
 
@@ -26,7 +26,7 @@ int32_t sign_extend(uint32_t insn) {
 	return 0;
 }
 
-int32_t alu(int ALUOp, uint32_t a, uint32_t b) {
+int32_t alu(uint ALUOp, int32_t a, int32_t b) {
 	switch(ALUOp) {
 		case 0: return a + b;
 		case 1: return a - b;
@@ -244,8 +244,8 @@ void Fetch_reg::print_local_PC() {
 	std::cout << "local PC:      0b" << std::bitset<32>(local_PC) << std::endl << std::endl;	
 }
 
-Decode_reg::Decode_reg(CU_signals CU_reg_, uint8_t rs1_, uint8_t rs2_, uint32_t rs1_val_, uint32_t rs2_val_, 
-						uint8_t rd_, uint16_t imm1_, uint32_t imm2_, uint32_t local_PC_, uint8_t funct3_) {
+Decode_reg::Decode_reg(CU_signals CU_reg_, uint8_t rs1_, uint8_t rs2_, int32_t rs1_val_, int32_t rs2_val_, 
+						uint8_t rd_, int16_t imm1_, int32_t imm2_, uint32_t local_PC_, uint8_t funct3_) {
 	CU_reg = CU_reg_;
 	rs1 = rs1_;
 	rs2 = rs2_;
@@ -270,7 +270,7 @@ void Decode_reg::print_reg() {
 	std::cout << "local_PC:      0b" << std::bitset<8>(local_PC) << std::endl << std::endl;
 }
 
-Execute_reg::Execute_reg(CU_signals CU_reg_, uint32_t rs2_val_, uint32_t ALUresult_, uint8_t rd_, bool flush_) {
+Execute_reg::Execute_reg(CU_signals CU_reg_, int32_t rs2_val_, int32_t ALUresult_, uint8_t rd_, bool flush_) {
 	CU_reg = CU_reg_;
 	rs2_val = rs2_val_;
 	ALUresult = ALUresult_;

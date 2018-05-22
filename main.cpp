@@ -42,9 +42,9 @@ int main()
 
 	// global signals
 	uint32_t PC = 0;
-	uint32_t PC_DISP = 0;
+	int32_t PC_DISP = 0;
 	uint8_t PC_R = 0;
-	uint32_t BP_EX = 0;
+	int32_t BP_EX = 0;
 	uint32_t BP_MEM = 0;
 	uint32_t local_PC = 0;
 	uint8_t branch = 0;
