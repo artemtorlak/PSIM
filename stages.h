@@ -1,6 +1,7 @@
 #ifndef STAGES_H
 #define STAGES_H
 
+#include <cassert>
 #include "memory.h"
 
 //на вход - память инструкций и регистров
@@ -10,13 +11,17 @@
 Fetch_reg fetch(Insn_data_memory &mem, uint32_t &PC, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t &local_PC, uint8_t branch) {	
 
 	Fetch_reg return_reg;
-	std::cout<<"PC_R is: "<<std::bitset<8>(PC_R)<<std::endl;
 	if (PC_R)
 	{
+		std::cout<<"LOCAL_PC = "<<local_PC<<std::endl<<std::endl;
+		std::cout<<"PC = "<<local_PC<<std::endl<<std::endl;
+		std::cout<<"static_cast<int32_t>(PC_DISP) = "<<static_cast<int32_t>(PC_DISP)<<std::endl<<std::endl;
 		PC = local_PC + static_cast<int32_t>(PC_DISP);
-		std::cout<<"local_PC : "<<local_PC<<std::endl;
-		std::cout<<"PC_DISP : "<<static_cast<int32_t>(PC_DISP)<<std::endl;			
-		std::cout<<"PC: "<<std::bitset<32>(PC)<<std::endl;	
+		int32_t NEW_PC = local_PC + static_cast<int32_t>(PC_DISP);
+		std::cout<<"NEW_PC = "<<NEW_PC<<std::endl<<std::endl;
+		assert(PC >= 0);
+		std::cout<<"PC: "<<PC<<std::endl<<std::endl;	
+		//std::cout<<"PC: "<<std::bitset<32>(PC)<<std::endl;	
 		branch = 1;
 		return_reg = Fetch_reg(mem.get_insn(PC), PC); // read instruction from memory
 		PC+=1;
@@ -24,6 +29,7 @@ Fetch_reg fetch(Insn_data_memory &mem, uint32_t &PC, uint32_t &PC_DISP, uint8_t 
 
 	else  
 	{
+		std::cout<<"PC: "<<PC<<std::endl<<std::endl;	
 		return_reg = Fetch_reg(mem.get_insn(PC), PC); // read instruction from memory
 		PC += 1;
 		branch = 0;
@@ -33,7 +39,7 @@ Fetch_reg fetch(Insn_data_memory &mem, uint32_t &PC, uint32_t &PC_DISP, uint8_t 
 	return return_reg;
 }
 
-Decode_reg decode(Fetch_reg &reg, Regfile &regfile) {
+Decode_reg decode(Fetch_reg &reg, Regfile &regfile, HU& HazardUnit) {
 	CU_signals CU = control_unit(reg.get_reg()); //create Control Unit
 
 	uint32_t local_PC = reg.get_local_PC();
@@ -56,7 +62,7 @@ Decode_reg decode(Fetch_reg &reg, Regfile &regfile) {
 	return return_reg;
 }
 
-Execute_reg execute(Decode_reg &reg, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t &BP_EX, uint32_t &BP_MEM, uint32_t &local_PC, uint8_t branch) {
+Execute_reg execute(Decode_reg &reg, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t &BP_EX, uint32_t &BP_MEM, uint32_t &local_PC, uint8_t branch, HU& HazardUnit) {
 	CU_signals CU = reg.get_CU_reg(); // get signals
 
 //Signals//	
@@ -77,7 +83,7 @@ Execute_reg execute(Decode_reg &reg, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t 
 
 	uint8_t rs1 = reg.get_rs1();
 	uint8_t funct3 = reg.get_funct3();
-	uint8_t WB_WE = 
+
 
 	//std::cout<<"imm1 is: "<<std::bitset<32>(imm1)<<std::endl;
 	//std::cout<<"imm2 is: "<<std::bitset<32>(imm2)<<std::endl;
@@ -119,6 +125,7 @@ Execute_reg execute(Decode_reg &reg, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t 
 	else {
 		PC_R = 0;
 	}
+
 	if (WB_WE)
 	{
 		HazardUnit.SetRdEx(rd);
@@ -127,11 +134,12 @@ Execute_reg execute(Decode_reg &reg, uint32_t &PC_DISP, uint8_t &PC_R, uint32_t 
 	{
 		HazardUnit.SetRdEx(0);
 	}
+
 	Execute_reg return_reg(CU, rs2_val, ALUresult, rd, flush);
 	return return_reg;
 }
 
-Memory_reg memory(Execute_reg &reg, Insn_data_memory &mem, uint32_t &BP_EX, uint8_t branch) {	
+Memory_reg memory(Execute_reg &reg, Insn_data_memory &mem, uint32_t &BP_EX, uint8_t branch, HU& HazardUnit) {	
 	CU_signals CU = reg.get_CU_reg(); // get signals
 	uint8_t mux_mem = CU.mux_mem;
 	uint8_t MEM_WE = CU.MEM_WE;
@@ -165,7 +173,7 @@ Memory_reg memory(Execute_reg &reg, Insn_data_memory &mem, uint32_t &BP_EX, uint
 	return return_reg;	
 }
 
-void write_back(Memory_reg &reg, Regfile &regfile, uint32_t &BP_MEM, uint8_t &branch) {
+void write_back(Memory_reg &reg, Regfile &regfile, uint32_t &BP_MEM, uint8_t &branch, HU& HazardUnit) {
 	CU_signals CU = reg.get_CU_reg(); // get signals
 	uint8_t WB_WE_signal = CU.WB_WE;
 	uint8_t STOP_signal = CU.stop;
@@ -178,6 +186,7 @@ void write_back(Memory_reg &reg, Regfile &regfile, uint32_t &BP_MEM, uint8_t &br
 	uint32_t WB_D = reg.get_mux_res(); // set signals
 	BP_MEM = reg.get_mux_res();
 	uint8_t WB_A = reg.get_rd();
+
 	if (WB_WE_signal)
 	{
 		HazardUnit.SetRdWb(reg.get_rd());
@@ -187,6 +196,7 @@ void write_back(Memory_reg &reg, Regfile &regfile, uint32_t &BP_MEM, uint8_t &br
 	{
 		HazardUnit.SetRdWb(0);
 	}
+
 	if (WB_WE_signal & (!branch)){
 		regfile.set_register(WB_A, WB_D); // write to regfile only on signal
 		std::cout << "[reg]: " << std::bitset<8>(WB_A) << " -> " << std::bitset<32>(regfile.get_register(WB_A)) << std::endl; 

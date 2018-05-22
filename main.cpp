@@ -4,7 +4,6 @@
 #include <bitset>
 #include <iostream>
 
-HU HazardUnit;
 
 int main() 
 {
@@ -13,7 +12,6 @@ int main()
 	//elf loader
 	elf::Elf_reader er;
     
-    #if 0
     er.Init("load_elf");
     std::vector<uint32_t> insns;
     
@@ -23,19 +21,22 @@ int main()
     	std::cout<<"ERROR"<<std::endl;
 
     std::cout<<"CMD SIZE IS: "<<insns.size()<<std::endl;
-   #endif
 
+
+	#if 0	
     std::vector<uint32_t> insns = {0b00000000010000011000000110110011, //add x3 , x3, x4
 								   0b00000000001100101000001001100011, // beq x3, x5, 2
 								   0b11111110010100101000111011100011,  //beq x5, x5, -2
 								   0b00000000000000000000000001111111};
+	#endif
 	// global instruction and data memory
+	//std::vector<uint32_t> insns = {0b11111110010100101000111011100011};	
 	Insn_data_memory instr_data_mem;
 	instr_data_mem.set_insn(insns);
 	instr_data_mem.print_memory();
 
 	// global regfile
-	uint32_t regs[32] = {0, 2, 0, 999, 1, 1000, 10, 7, 3, 7, 4, 6, 2, 6, 2, 5, 3, 6, 2, 7, 6, 4, 2, 6, 9, 3, 3, 0, 8, 4, 5, 3};
+	uint32_t regs[32] = {0, 2, 0, 0, 1, 1000, 10, 7, 3, 7, 4, 6, 2, 6, 2, 5, 3, 6, 2, 7, 6, 4, 2, 6, 9, 3, 3, 0, 8, 4, 5, 3};
 	Regfile regfile(regs);
 	regfile.print_regfile();
 
@@ -52,13 +53,14 @@ int main()
 	Decode_reg decode_reg;
 	Execute_reg execute_reg;
 	Memory_reg memory_reg;
+	HU HazardUnit;
 
-	int N = 20;
+	int N = 6000;
 	 // number of cycles
 	for (int i = 0; i < N; i++) {
 		printf("--------------------------------------------------------\n");
-		std::cout << "PC = " << PC << std::endl;
-		std::cout << "cycle = " << i << std::endl << std::endl;
+		//std::cout << "PC = " << PC << std::endl;
+		std::cout << "cycle = " << i << std::endl;
 
 		//Fetch stage
 		//After this stage we get int time_
@@ -66,16 +68,16 @@ int main()
 		fetch_tmp.print_reg();
 
 		//Decode stage
-		Decode_reg decode_tmp = decode(fetch_reg, regfile);
+		Decode_reg decode_tmp = decode(fetch_reg, regfile, HazardUnit);
 		decode_tmp.print_reg();
 
-		Execute_reg execute_tmp = execute(decode_reg, PC_DISP, PC_R, BP_EX, BP_MEM, local_PC, branch);
+		Execute_reg execute_tmp = execute(decode_reg, PC_DISP, PC_R, BP_EX, BP_MEM, local_PC, branch, HazardUnit);
 		execute_tmp.print_reg();
 
-		Memory_reg memory_tmp = memory(execute_reg, instr_data_mem, BP_EX, branch);
+		Memory_reg memory_tmp = memory(execute_reg, instr_data_mem, BP_EX, branch, HazardUnit);
 		memory_tmp.print_reg();
 
-		write_back(memory_reg, regfile, BP_MEM, branch);
+		write_back(memory_reg, regfile, BP_MEM, branch, HazardUnit);
 
 		HazardUnit.Run(fetch_tmp, decode_tmp, execute_tmp, memory_tmp);
 

@@ -87,8 +87,8 @@ public:
 	uint32_t get_imm2() { return imm2; }
 	uint32_t get_local_PC() { return local_PC; }
 	uint8_t get_funct3() { return funct3; }
-	void SetRs1Val(uint32_t rs1_val) { rs1_val = rs1_val_; }
-	void SetRs2Val(uint32_t rs2_val) { rs2_val = rs2_val_; }
+	void SetRs1Val(uint32_t rs1_val_) { rs1_val = rs1_val_; }
+	void SetRs2Val(uint32_t rs2_val_) { rs2_val = rs2_val_; }
 	void print_reg();
 };
 
@@ -98,61 +98,6 @@ class Execute_reg {
 	uint32_t ALUresult;
 	uint8_t rd;
 	bool flush = false;
-
-class HU {
-	uint8_t rs1,
-			rs2,
-			rd_ex,
-			rd_mem,
-			rd_wb;
-	uint32_t wb_res;
-//	bool flush_again = false;
-	public:
-		void SetRs1(uint8_t rs1_) { rs1 = rs1_; }
-		void SetRs2(uint8_t rs2_) { rs2 = rs2_; }
-		void SetRdEx(uint8_t rd_ex__) { rd_ex = rd_ex_; }
-		void SetRdMem(uint8_t rd_mem_) { rd_mem = rd_mem_; }
-		void SetRdWb(uint8_t rd_wb_) { rd_wb = rd_wb_; }
-		void SetWbRes(uint8_t wb_res_) { wb_res = wb_res_; }
-		void Run(Fetch_reg& fetch, Decode_reg& decode, Execute_reg& execute, Memory_reg& mem) 
-		{
-
-			bool rs1_collision = false,
-				 rs2_collision = false;
-#if 0
-			if (flush_again)
-			{
-				fetch = Fetch_reg();
-				flush_again = false;
-				return;
-			}
-#endif
-			if ((rs1 == rd_ex && rs1 != 0 && rs1_collision = true) || (rs2 == rd_ex && rs2 != 0 && rs2_collision = true))
-			{
-				rs1_collision ? decode.SetRs1Val(execute.get_ALUresult()) : ;
-				rs2_collision ? decode.SetRs2Val(execute.get_ALUresult()) : ;
-				//flush_again = true;
-				//decode = Decode_reg();
-				//fetch = Fetch_reg();
-				return;
-			}
-			if ((rs1 == rd_mem  && rs1 != 0 && rs1_collision = true) || (rs2 == rd_mem && rs2 != 0 && rs2_collision = true))
-			{
-				rs1_collision ? decode.SetRs1Val(mem.get_mux_res()) : ;
-				rs2_collision ? decode.SetRs2Val(mem.get_mux_res()) : ;
-				//decode = Decode_reg();
-				//fetch = Fetch_reg();
-				return;
-			}
-			if ((rs1 == rd_wb  && rs1 != 0 && rs1_collision = true) || (rs2 == rd_wb && rs2 != 0 && rs2_collision = true))
-			{
-				rs1_collision ? decode.SetRs1Val(wb_res) : ;
-				rs2_collision ? decode.SetRs2Val(wb_res) : ;
-				fetch = Fetch_reg();
-				return;
-			}
-		}
-};
 
 public:
 	Execute_reg() : rs2_val(0), ALUresult(0), rd(0) {}
@@ -182,6 +127,77 @@ public:
 
 	void print_reg();
 };
+
+class HU {
+	uint8_t rs1,
+			rs2,
+			rd_ex,
+			rd_mem,
+			rd_wb;
+	uint32_t wb_res;
+//	bool flush_again = false;
+	public:
+		void SetRs1(uint8_t rs1_) { rs1 = rs1_; }
+		void SetRs2(uint8_t rs2_) { rs2 = rs2_; }
+		void SetRdEx(uint8_t rd_ex_) { rd_ex = rd_ex_; }
+		void SetRdMem(uint8_t rd_mem_) { rd_mem = rd_mem_; }
+		void SetRdWb(uint8_t rd_wb_) { rd_wb = rd_wb_; }
+		void SetWbRes(uint8_t wb_res_) { wb_res = wb_res_; }
+		void Run(Fetch_reg& fetch, Decode_reg& decode, Execute_reg& execute, Memory_reg& mem) 
+		{
+
+			bool rs1_collision = false,
+				 rs2_collision = false;
+#if 0
+			if (flush_again)
+			{
+				fetch = Fetch_reg();
+				flush_again = false;
+				return;
+			}
+#endif
+			if ((rs1 == rd_ex && rs1 != 0 && (rs1_collision = true)) || (rs2 == rd_ex && rs2 != 0 && (rs2_collision = true)))
+			{
+				//rs1_collision ? decode.SetRs1Val(execute.get_ALUresult()) : ;
+				if(rs1_collision)
+					decode.SetRs1Val(execute.get_ALUresult());
+				//rs2_collision ? decode.SetRs2Val(execute.get_ALUresult()) : ;
+				if(rs2_collision)
+					decode.SetRs2Val(execute.get_ALUresult());
+				//flush_again = true;
+				//decode = Decode_reg();
+				//fetch = Fetch_reg();
+				return;
+			}
+
+			if ((rs1 == rd_mem  && rs1 != 0 && (rs1_collision = true)) || (rs2 == rd_mem && rs2 != 0 && (rs2_collision == true)))
+			{
+				//rs1_collision ? decode.SetRs1Val(mem.get_mux_res()) : ;
+				if(rs1_collision)
+					decode.SetRs1Val(mem.get_mux_res());
+				//rs2_collision ? decode.SetRs2Val(mem.get_mux_res()) : ;
+				if(rs2_collision)
+					decode.SetRs2Val(mem.get_mux_res());
+				//decode = Decode_reg();
+				//fetch = Fetch_reg();
+				return;
+			}
+
+			if ((rs1 == rd_wb  && rs1 != 0 && (rs1_collision == true)) || (rs2 == rd_wb && rs2 != 0 && (rs2_collision == true)))
+			{
+				//rs1_collision ? decode.SetRs1Val(wb_res) : ;
+				if(rs1_collision)
+					decode.SetRs1Val(wb_res);
+				//rs2_collision ? decode.SetRs2Val(wb_res) : ;
+				if(rs2_collision)
+					decode.SetRs2Val(wb_res);
+				fetch = Fetch_reg();
+				return;
+			}
+		}
+};
+
+
 //-------------------------------------------------------------------------------------------------------
 // MEMORY:
 
