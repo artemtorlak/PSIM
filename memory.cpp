@@ -300,6 +300,53 @@ void Memory_reg::print_reg() {
 	std::cout << "mux_result:    0b" << std::bitset<32>(mux_result) << std::endl;
 	std::cout << "RD:            0b" << std::bitset<8>(rd) << std::endl << std::endl;
 }
+
+
+void HU::Run(Fetch_reg& fetch, Decode_reg& decode, Execute_reg& execute, Memory_reg& mem) 
+		{
+
+			bool rs1_collision = false,
+				 rs2_collision = false;
+
+			if ((rs1 == rd_ex && rs1 != 0 && (rs1_collision = true)) || (rs2 == rd_ex && rs2 != 0 && (rs2_collision = true)))
+			{
+				//rs1_collision ? decode.SetRs1Val(execute.get_ALUresult()) : ;
+				if(rs1_collision)
+					decode.SetRs1Val(execute.get_ALUresult());
+				//rs2_collision ? decode.SetRs2Val(execute.get_ALUresult()) : ;
+				if(rs2_collision)
+					decode.SetRs2Val(execute.get_ALUresult());
+				//flush_again = true;
+				//decode = Decode_reg();
+				//fetch = Fetch_reg();
+				return;
+			}
+
+			if ((rs1 == rd_mem  && rs1 != 0 && (rs1_collision = true)) || (rs2 == rd_mem && rs2 != 0 && (rs2_collision == true)))
+			{
+				//rs1_collision ? decode.SetRs1Val(mem.get_mux_res()) : ;
+				if(rs1_collision)
+					decode.SetRs1Val(mem.get_mux_res());
+				//rs2_collision ? decode.SetRs2Val(mem.get_mux_res()) : ;
+				if(rs2_collision)
+					decode.SetRs2Val(mem.get_mux_res());
+				//decode = Decode_reg();
+				//fetch = Fetch_reg();
+				return;
+			}
+
+			if ((rs1 == rd_wb  && rs1 != 0 && (rs1_collision == true)) || (rs2 == rd_wb && rs2 != 0 && (rs2_collision == true)))
+			{
+				//rs1_collision ? decode.SetRs1Val(wb_res) : ;
+				if(rs1_collision)
+					decode.SetRs1Val(wb_res);
+				//rs2_collision ? decode.SetRs2Val(wb_res) : ;
+				if(rs2_collision)
+					decode.SetRs2Val(wb_res);
+				fetch = Fetch_reg();
+				return;
+			}
+		}
 //---------------------------------------------------------------------------------------------------------------
 
 void Insn_data_memory::print_memory() {

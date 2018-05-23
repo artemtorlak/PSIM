@@ -13,16 +13,12 @@ Fetch_reg fetch(Insn_data_memory &mem, uint32_t &PC, int32_t &PC_DISP, uint8_t &
 	Fetch_reg return_reg;
 	if (PC_R)
 	{
-		std::cout<<"LOCAL_PC = "<<local_PC<<std::endl<<std::endl;
-		std::cout<<"PC = "<<local_PC<<std::endl<<std::endl;
-		std::cout<<"static_cast<int32_t>(PC_DISP) = "<<static_cast<int32_t>(PC_DISP)<<std::endl<<std::endl;
-		
+		std::cout<<"LOCAL_PC = "<<local_PC<<std::endl;		
+		std::cout<<"PC_DISP = "<<PC_DISP<<std::endl;		
 		PC = local_PC + static_cast<int32_t>(PC_DISP);
-		int32_t NEW_PC = local_PC + static_cast<int32_t>(PC_DISP);
-		std::cout<<"NEW_PC = "<<NEW_PC<<std::endl<<std::endl;
+		std::cout<<"PC = "<<PC<<std::endl<<std::endl;
+
 		assert(PC >= 0);
-		std::cout<<"PC: "<<PC<<std::endl<<std::endl;	
-		//std::cout<<"PC: "<<std::bitset<32>(PC)<<std::endl;	
 		branch = 1;
 		return_reg = Fetch_reg(mem.get_insn(PC), PC); // read instruction from memory
 		PC+=1;
