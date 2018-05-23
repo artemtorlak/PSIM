@@ -13,7 +13,7 @@ int main()
 	#if 0
 	elf::Elf_reader er;
     
-    er.Init("1_elf");
+    er.Init("load_elf");
     std::vector<uint32_t> insns;
     
     uint32_t pc = 0, va;
