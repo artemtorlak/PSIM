@@ -156,9 +156,21 @@ class Insn_data_memory {
 	std::vector<uint32_t> insn;
 
 public:
-	Insn_data_memory() {}
+	Insn_data_memory() {insn.reserve(256000);}
 
-	void set_insn(std::vector<uint32_t> insns) { insn = insns; }
+	void set_insn(std::vector<uint32_t> insns) 
+    { int j=0;
+          
+       // std::cout<<"set_nsn"<<std::endl;
+      for(int i=(65536/4); i< ((65536/4) + insns.size()); i++) 
+      {
+        //std::cout<<i<<std::endl;
+        insn[i] = insns[j];
+        //std::cout<<insns[j]<<std::endl;
+        j++; 
+      }
+    }
+
 	uint32_t get_insn(int PC) { return insn[PC]; }
 	void set_register(int32_t reg, uint32_t A) { assert(reg >= 0); insn[A] = reg; }
 	uint32_t get_register(uint32_t reg) { assert(reg >= 0); return insn[reg]; }

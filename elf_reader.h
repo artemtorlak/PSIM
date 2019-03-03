@@ -4,7 +4,7 @@
 #include <iostream>
 #include <err.h>
 #include <fcntl.h>
-#include <gelf.h>
+#include "/nfs/inn/disks/sgc.sw.users/atorlak/PSIM/PSIM/elfutils/lib/elf/include/gelf.h"
 #include <string>
 #include <unistd.h>
 #include <vector>

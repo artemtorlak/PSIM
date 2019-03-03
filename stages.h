@@ -8,14 +8,15 @@
 //сигналы
 //регистр после стадии и результат АЛУ
 
-Fetch_reg fetch(Insn_data_memory &mem, uint32_t &PC, int32_t &PC_DISP, uint8_t &PC_R, uint32_t &local_PC, uint8_t branch) {	
+Fetch_reg fetch(Insn_data_memory &mem, uint32_t &PC, int32_t &PC_DISP, uint8_t &PC_R, uint32_t &local_PC, uint8_t branch, uint8_t& check_J) {	
 
 	Fetch_reg return_reg;
 	if (PC_R)
 	{
 		std::cout<<"LOCAL_PC = "<<local_PC<<std::endl;		
 		std::cout<<"PC_DISP = "<<PC_DISP<<std::endl;		
-		PC = local_PC + static_cast<int32_t>(PC_DISP);
+	    std::cout<<"check_J = "<<std::bitset<8>(check_J)<<std::endl;
+        PC = check_J ? (PC_DISP/4)  : local_PC + static_cast<int32_t>(PC_DISP) ;
 		std::cout<<"PC = "<<PC<<std::endl<<std::endl;
 
 		assert(PC >= 0);
@@ -59,7 +60,7 @@ Decode_reg decode(Fetch_reg &reg, Regfile &regfile, HU& HazardUnit) {
 	return return_reg;
 }
 
-Execute_reg execute(Decode_reg &reg, int32_t &PC_DISP, uint8_t &PC_R, int32_t &BP_EX, uint32_t &BP_MEM, uint32_t &local_PC, uint8_t branch, HU& HazardUnit) {
+Execute_reg execute(Decode_reg &reg, int32_t &PC_DISP, uint8_t &PC_R, int32_t &BP_EX, uint32_t &BP_MEM, uint32_t &local_PC, uint8_t branch, HU& HazardUnit, uint8_t& check_J) {
 	CU_signals CU = reg.get_CU_reg(); // get signals
 
 //Signals//	
@@ -68,7 +69,8 @@ Execute_reg execute(Decode_reg &reg, int32_t &PC_DISP, uint8_t &PC_R, int32_t &B
 	uint8_t conditional = CU.conditional;
 	uint8_t WB_WE = CU.WB_WE;
 	uint8_t mux_pc = CU.mux_pc;
-	uint8_t check_J = CU.check_J;
+	check_J = CU.check_J;
+	std::cout<<"check_J = "<<std::bitset<8>(check_J)<<std::endl;
 //Signals//
 
 	local_PC = reg.get_local_PC();
